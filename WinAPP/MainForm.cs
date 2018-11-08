@@ -3,19 +3,17 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
-using System.Threading.Tasks;
-using System.Timers;
-using System.Windows.Forms;
-
-using CefSharp;
-using CefSharp.WinForms;
-using Hylasoft.Opc.Da;
-using Newtonsoft.Json;
+using System.IO;
 using Newtonsoft.Json.Linq;
+using System.Windows.Forms;
+using System.Net;
+using Newtonsoft.Json;
+using OPCAutomation;
+using CefSharp.WinForms;
+using CefSharp;
+using Hylasoft.Opc.Da;
 
 namespace WinAPP
 
@@ -24,7 +22,6 @@ namespace WinAPP
     {
         public static ChromiumWebBrowser WebBrowser = null;
 
-        
         public static DaClient _client;
         public static String localIP = GetClientLocalIPv4Address(); // 本机IP地址
         public static string ClientUrl; // 客户端访问的服务地址
@@ -35,32 +32,34 @@ namespace WinAPP
         public MainForm()
         {
             InitializeComponent();
+            CefSettings settings = new CefSettings();
+            Cef.Initialize(settings);
         }
 
         private void MainForm_Load(object sender, EventArgs e)
-        {
-            
-        }
-
-        private void connect_btn_Click(object sender, EventArgs e)
         {
             ReadJson();
 
             InitDA(); // 初始化OPC连接
 
-            CefSettings settings = new CefSettings();
-            Cef.Initialize(settings);
-            WebBrowser = new ChromiumWebBrowser(Application.StartupPath + @"\Jmp.html");
-            WebBrowser.Dock = DockStyle.Fill;
-            panel2.Controls.Add(WebBrowser);
+            InitWebBrower();
+        }
+
+        public void InitWebBrower()
+        {
+            WebBrowser = new ChromiumWebBrowser(Application.StartupPath + @"\Index.html");
+            this.Controls.Add(WebBrowser);
 
             CefSharpSettings.LegacyJavascriptBindingEnabled = true;
             WebBrowser.RegisterJsObject("JsObj", new WebSocketHandle(), new CefSharp.BindingOptions { CamelCaseJavascriptNames = false });
+            //WebBrowser.RegisterJsObject("logInfo", LogHelp.logInfo, new CefSharp.BindingOptions { CamelCaseJavascriptNames = false });
+            //WebBrowser.RegisterJsObject("logErr", LogHelp.logErr, new CefSharp.BindingOptions { CamelCaseJavascriptNames = false });
+            //WebBrowser.RegisterJsObject("JsObj", new WebSocketHandle(), false);
         }
 
         public void InitDA()
         {
-            String serverName = textBox1.Text;
+            String serverName = EQInfo["SERVER_NAME"].ToString();
             ClientUrl = "opcda://" + localIP + "/" + serverName;
             _client = new DaClient(new Uri(ClientUrl));
             _client.Connect();
@@ -106,5 +105,6 @@ namespace WinAPP
         {
             Cef.Shutdown();
         }
+
     }
 }
